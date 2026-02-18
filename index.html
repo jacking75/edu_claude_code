@@ -73,6 +73,54 @@
 
     .nav-links a:hover { color: var(--text); transition: color 0.2s; }
 
+    /* ── Dropdown Menu ── */
+    .nav-item {
+      position: relative;
+    }
+
+    .nav-item > a {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 20px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(22, 25, 33, 0.98);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-width: 280px;
+      padding: 0.5rem 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+    }
+
+    .nav-item:hover .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown-menu a {
+      display: block;
+      padding: 0.75rem 1.25rem;
+      color: var(--muted);
+      transition: background 0.2s, color 0.2s;
+      font-size: 0.88rem;
+    }
+
+    .dropdown-menu a:hover {
+      background: rgba(201, 100, 66, 0.1);
+      color: var(--text);
+    }
+
     .nav-badge {
       font-size: 0.78rem;
       padding: 4px 12px;
@@ -456,6 +504,12 @@
       <a href="#features">주요 기능</a>
       <a href="#curriculum">커리큘럼</a>
       <a href="#start">시작하기</a>
+      <div class="nav-item">
+        <a>Tips ▾</a>
+        <div class="dropdown-menu">
+          <a href="https://news.hada.io/topic?id=26649" target="_blank">Claude Code 창시자의 커스터마이징 팁 12가지</a>
+        </div>
+      </div>
     </div>
     <div class="nav-badge">by Anthropic</div>
   </nav>
