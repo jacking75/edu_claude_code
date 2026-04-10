@@ -2,6 +2,7 @@
   
 - [설치하기](https://goddaehee.tistory.com/372)
 - [(일어) WSL 내에서 실행하는 Claude Code의 동작을 고속화하는 간단한 설정](https://zenn.dev/momonga/articles/ee5b114e038938 )
+- [Openclaw acp claude code](https://x.com/garibongsaram/status/2033084361789288848?s=12&t=2WY2q94tfkfq98WvqWlJ6A  )  
   
 - [Claude Code 마스터](https://claudecode-master.netlify.app/) 
 - [(일어) Claude Code 완전 가이드](https://zenn.dev/heku/books/claude-code-guide)   
@@ -9,6 +10,7 @@
 - [바이브코딩 에센셜 with claude code | 위니북스](https://books.weniv.co.kr/essentials-vibecoding) 
   
 - [A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows](https://github.com/ComposioHQ/awesome-claude-skills) 
+- [바이브 코딩의 토큰 관리 전략](https://roboco.io/posts/vibe-coding-token-management-strategy/ )   
 
 - [Agentic Patterns Snippets](https://esc5221.github.io/awesome-agentic-patterns/) 
 
