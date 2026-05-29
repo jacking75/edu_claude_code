@@ -1,676 +1,1023 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claude Code 학습 가이드</title>
-  <style>
-    /* ── Reset & Base ── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:        #0d0f14;
-      --surface:   #161921;
-      --border:    #2a2d3a;
-      --accent:    #c96442;   /* Anthropic orange */
-      --accent2:   #e8885e;
-      --text:      #e8eaf0;
-      --muted:     #8b8fa8;
-      --card-bg:   #1c1f2b;
-      --glow:      rgba(201, 100, 66, 0.18);
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    a { color: inherit; text-decoration: none; }
-
-    /* ── Navbar ── */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      height: 60px;
-      background: rgba(13, 15, 20, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 700;
-      font-size: 1.1rem;
-      letter-spacing: -0.02em;
-    }
-
-    .nav-logo .logo-icon {
-      width: 28px; height: 28px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.8rem;
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
-
-    .nav-links a:hover { color: var(--text); transition: color 0.2s; }
-
-    /* ── Dropdown Menu ── */
-    .nav-item {
-      position: relative;
-    }
-
-    .nav-item > a {
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-
-    .dropdown-menu {
-      position: absolute;
-      top: calc(100% + 20px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(22, 25, 33, 0.98);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      min-width: 280px;
-      padding: 0.5rem 0;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.2s, visibility 0.2s;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      z-index: 1000;
-    }
-
-    .nav-item:hover .dropdown-menu {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .dropdown-menu a {
-      display: block;
-      padding: 0.75rem 1.25rem;
-      color: var(--muted);
-      transition: background 0.2s, color 0.2s;
-      font-size: 0.88rem;
-    }
-
-    .dropdown-menu a:hover {
-      background: rgba(201, 100, 66, 0.1);
-      color: var(--text);
-    }
-
-    .nav-badge {
-      font-size: 0.78rem;
-      padding: 4px 12px;
-      border: 1px solid var(--accent);
-      border-radius: 20px;
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 6rem 1.5rem 4rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* 배경 그라디언트 오브 */
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 20%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent2);
-      background: rgba(201, 100, 66, 0.12);
-      border: 1px solid rgba(201, 100, 66, 0.3);
-      padding: 6px 14px;
-      border-radius: 20px;
-      margin-bottom: 1.8rem;
-    }
-
-    .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 4.2rem);
-      font-weight: 800;
-      line-height: 1.15;
-      letter-spacing: -0.03em;
-      max-width: 820px;
-      margin-bottom: 1.4rem;
-    }
-
-    .hero h1 span {
-      background: linear-gradient(90deg, var(--accent), var(--accent2) 60%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-desc {
-      font-size: 1.15rem;
-      color: var(--muted);
-      max-width: 560px;
-      line-height: 1.75;
-      margin-bottom: 2.6rem;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.95rem;
-      padding: 13px 28px;
-      border-radius: 10px;
-      transition: opacity 0.2s, transform 0.2s;
-      box-shadow: 0 4px 24px rgba(201, 100, 66, 0.35);
-    }
-
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      background: transparent;
-      color: var(--text);
-      font-weight: 600;
-      font-size: 0.95rem;
-      padding: 13px 28px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--accent);
-      background: rgba(201, 100, 66, 0.07);
-    }
-
-    /* ── Terminal Demo ── */
-    .terminal-wrap {
-      margin-top: 4rem;
-      max-width: 680px;
-      width: 100%;
-    }
-
-    .terminal {
-      background: #0a0c10;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-      font-size: 0.88rem;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-
-    .terminal-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 10px 16px;
-      background: #111318;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-r { background: #ff5f57; }
-    .dot-y { background: #ffbd2e; }
-    .dot-g { background: #28c840; }
-
-    .terminal-title {
-      flex: 1;
-      text-align: center;
-      font-size: 0.78rem;
-      color: var(--muted);
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    .terminal-body { padding: 1.2rem 1.4rem; line-height: 1.9; }
-
-    .t-prompt { color: #4ec9b0; }
-    .t-cmd    { color: #ce9178; }
-    .t-comment{ color: #6a9955; }
-    .t-out    { color: #9cdcfe; }
-    .t-success{ color: #4ec9b0; }
-    .t-cursor {
-      display: inline-block;
-      width: 9px; height: 1.1em;
-      background: var(--accent2);
-      vertical-align: text-bottom;
-      animation: blink 1s step-end infinite;
-    }
-
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    /* ── Features ── */
-    .section {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 5rem 1.5rem;
-    }
-
-    .section-label {
-      text-align: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 0.7rem;
-    }
-
-    .section-title {
-      text-align: center;
-      font-size: clamp(1.7rem, 3.5vw, 2.5rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
-    }
-
-    .section-sub {
-      text-align: center;
-      color: var(--muted);
-      font-size: 1rem;
-      max-width: 540px;
-      margin: 0 auto 3rem;
-      line-height: 1.7;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.2rem;
-    }
-
-    .feature-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.6rem;
-      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-    }
-
-    .feature-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 32px rgba(201, 100, 66, 0.12);
-    }
-
-    .feature-icon {
-      font-size: 1.8rem;
-      margin-bottom: 0.9rem;
-    }
-
-    .feature-card h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .feature-card p {
-      font-size: 0.9rem;
-      color: var(--muted);
-      line-height: 1.65;
-    }
-
-    /* ── Curriculum ── */
-    .curriculum-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-      counter-reset: step;
-    }
-
-    .step-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.5rem;
-      position: relative;
-      transition: border-color 0.2s;
-      counter-increment: step;
-    }
-
-    .step-card::before {
-      content: counter(step, decimal-leading-zero);
-      position: absolute;
-      top: 1.3rem; right: 1.3rem;
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--border);
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .step-card:hover { border-color: var(--accent); }
-
-    .step-badge {
-      display: inline-block;
-      font-size: 0.73rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 6px;
-      margin-bottom: 0.9rem;
-    }
-
-    .badge-beginner  { background: rgba(78, 201, 176, 0.15); color: #4ec9b0; }
-    .badge-middle    { background: rgba(255, 189, 46, 0.15);  color: #ffbd2e; }
-    .badge-advanced  { background: rgba(201, 100, 66, 0.15);  color: var(--accent2); }
-
-    .step-card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 0.45rem;
-    }
-
-    .step-card p {
-      font-size: 0.86rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* ── CTA Banner ── */
-    .cta-section {
-      padding: 4rem 1.5rem;
-    }
-
-    .cta-box {
-      max-width: 860px;
-      margin: 0 auto;
-      background: linear-gradient(135deg, rgba(201,100,66,0.18), rgba(22,25,33,0.9));
-      border: 1px solid rgba(201, 100, 66, 0.35);
-      border-radius: 20px;
-      padding: 3.5rem 2rem;
-      text-align: center;
-    }
-
-    .cta-box h2 {
-      font-size: clamp(1.6rem, 3vw, 2.2rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 0.9rem;
-    }
-
-    .cta-box p {
-      color: var(--muted);
-      font-size: 1rem;
-      line-height: 1.7;
-      margin-bottom: 2rem;
-    }
-
-    .install-cmd {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.7rem;
-      background: #0a0c10;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 22px;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      font-size: 0.92rem;
-      color: #4ec9b0;
-      margin-bottom: 1.8rem;
-      cursor: pointer;
-      transition: border-color 0.2s;
-    }
-
-    .install-cmd:hover { border-color: var(--accent); }
-    .install-cmd .copy-icon { color: var(--muted); font-size: 0.85rem; }
-
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 1.5rem;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    footer span { color: var(--accent2); }
-
-    /* ── Divider ── */
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      .nav-links { display: none; }
-      .hero h1   { font-size: 2rem; }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- ════ Navbar ════ -->
-  <nav>
-    <div class="nav-logo">
-      <div class="logo-icon">⚡</div>
-      Claude Code Docs
-    </div>
-    <div class="nav-links">
-      <a href="#features">주요 기능</a>
-      <a href="#curriculum">커리큘럼</a>
-      <a href="#start">시작하기</a>
-      <div class="nav-item">
-        <a>Tips ▾</a>
-        <div class="dropdown-menu">
-          <a href="https://news.hada.io/topic?id=26649" target="_blank">Claude Code 창시자의 커스터마이징 팁 12가지</a>
-          <a href="infographics/001.jpg" target="_blank">Claude Code API 할당량 소진 시 로컬 모델로 계속 작업하는 방법</a>
-        </div>
-      </div>
-    </div>
-    <div class="nav-badge">by Anthropic</div>
-  </nav>
-
-  <!-- ════ Hero ════ -->
-  <section class="hero">
-    <div class="hero-eyebrow">
-      🚀 Agentic Coding Tool
-    </div>
-    <h1>
-      터미널에서 만나는<br />
-      <span>AI 코딩의 미래</span><br />
-      Claude Code
-    </h1>
-    <p class="hero-desc">
-      Anthropic이 만든 AI 코딩 에이전트 <strong>Claude Code</strong>를 처음부터 실전까지.<br />
-      설치부터 자동화 워크플로우까지 단계별로 학습하세요.
-    </p>
-    <div class="hero-actions">
-      <a href="#curriculum" class="btn-primary">📚 학습 시작하기 →</a>
-      <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" class="btn-secondary">📄 공식 문서 보기</a>
-    </div>
-
-    <!-- Terminal Demo -->
-    <div class="terminal-wrap">
-      <div class="terminal">
-        <div class="terminal-bar">
-          <div class="dot dot-r"></div>
-          <div class="dot dot-y"></div>
-          <div class="dot dot-g"></div>
-          <div class="terminal-title">~ claude</div>
-        </div>
-        <div class="terminal-body">
-          <div><span class="t-prompt">$</span> <span class="t-cmd">npm install -g @anthropic-ai/claude-code</span></div>
-          <div><span class="t-success">✓ Claude Code installed successfully</span></div>
-          <br />
-          <div><span class="t-prompt">$</span> <span class="t-cmd">claude</span></div>
-          <div><span class="t-out">╭─────────────────────────────────╮</span></div>
-          <div><span class="t-out">│  ✻ Welcome to Claude Code!      │</span></div>
-          <div><span class="t-out">│  Powered by Claude Sonnet 4     │</span></div>
-          <div><span class="t-out">╰─────────────────────────────────╯</span></div>
-          <br />
-          <div><span class="t-comment"># 자연어로 코드 작업을 요청하세요</span></div>
-          <div><span class="t-prompt">›</span> <span class="t-cmd">로그인 기능을 가진 FastAPI 앱을 만들어줘</span> <span class="t-cursor"></span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ════ Features ════ -->
-  <section class="section" id="features">
-    <div class="section-label">Core Features</div>
-    <h2 class="section-title">Claude Code, 왜 다를까요?</h2>
-    <p class="section-sub">단순한 코드 완성 도구가 아닙니다. 프로젝트 전체를 이해하고 자율적으로 작업하는 AI 에이전트입니다.</p>
-
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3>자율적 계획 수립</h3>
-        <p>복잡한 기능을 단계별로 계획하고, 프로젝트 구조와 의존성을 스스로 이해하여 최적의 구현 방향을 결정합니다.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📂</div>
-        <h3>코드베이스 전체 이해</h3>
-        <p>현재 열려 있는 파일뿐 아니라 프로젝트 전체를 읽고 분석하여, 문맥에 맞는 정확한 코드를 생성합니다.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚙️</div>
-        <h3>명령어 직접 실행</h3>
-        <p>파일 생성·수정, 터미널 명령 실행, 테스트 구동까지 허락 없이 직접 수행하며 개발 사이클을 자동화합니다.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔗</div>
-        <h3>개발 도구 통합</h3>
-        <p>Git, npm, pip 등 기존 개발 도구와 자연스럽게 연동되어 기존 워크플로우를 그대로 유지할 수 있습니다.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💬</div>
-        <h3>자연어 인터페이스</h3>
-        <p>복잡한 명령어 없이 평소 말하듯 지시하면 됩니다. "인증 기능 추가해줘"처럼 간결하게 소통하세요.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>권한 기반 안전성</h3>
-        <p>민감한 작업은 사용자 승인을 요청하며, CLAUDE.md를 통해 프로젝트별 규칙과 행동 범위를 명시할 수 있습니다.</p>
-      </div>
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ════ Curriculum ════ -->
-  <section class="section" id="curriculum">
-    <div class="section-label">Learning Path</div>
-    <h2 class="section-title">단계별 학습 커리큘럼</h2>
-    <p class="section-sub">입문자부터 고급 사용자까지, 체계적인 로드맵으로 Claude Code를 마스터하세요.</p>
-
-    <div class="curriculum-grid">
-      <div class="step-card">
-        <span class="step-badge badge-beginner">입문</span>
-        <h3>설치 & 환경 설정</h3>
-        <p>Node.js 환경에서 Claude Code를 설치하고, API 키 인증 및 기본 설정을 완료합니다.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-badge badge-beginner">입문</span>
-        <h3>첫 번째 대화</h3>
-        <p>간단한 스크립트 생성 요청부터 시작하여, 프롬프트 작성의 기초를 익힙니다.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-badge badge-middle">중급</span>
-        <h3>파일 & 프로젝트 관리</h3>
-        <p>파일 읽기·쓰기, 멀티 파일 리팩토링, 디렉토리 구조 자동 생성 방법을 배웁니다.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-badge badge-middle">중급</span>
-        <h3>CLAUDE.md 활용</h3>
-        <p>프로젝트 규칙 정의 파일을 작성하여 Claude Code의 행동 방식을 프로젝트에 최적화합니다.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-badge badge-middle">중급</span>
-        <h3>Git 연동 & 자동화</h3>
-        <p>커밋 메시지 생성, PR 리뷰 자동화, 브랜치 관리까지 Git 워크플로우를 자동화합니다.</p>
-      </div>
-      <div class="step-card">
-        <span class="step-badge badge-advanced">고급</span>
-        <h3>에이전트 워크플로우</h3>
-        <p>복잡한 멀티스텝 작업을 파이프라인으로 구성하고, CI/CD에 Claude Code를 통합합니다.</p>
-      </div>
-    </div>
-  </section>
-
-  <hr class="divider" />
-
-  <!-- ════ CTA ════ -->
-  <section class="cta-section" id="start">
-    <div class="cta-box">
-      <h2>지금 바로 시작해보세요 🚀</h2>
-      <p>단 한 줄의 명령어로 Claude Code를 설치하고,<br />AI와 함께하는 새로운 개발 경험을 시작하세요.</p>
-      <div class="install-cmd">
-        <span>npm install -g @anthropic-ai/claude-code</span>
-        <span class="copy-icon">📋</span>
-      </div>
-      <div>
-        <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" class="btn-primary">
-          📘 공식 문서에서 더 알아보기
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ════ Footer ════ -->
-  <footer>
-    <p>Claude Code 학습 가이드 · Made with <span>♥</span> · Powered by Anthropic</p>
-    <p style="margin-top:0.4rem; font-size:0.78rem;">
-      본 사이트는 학습 목적으로 제작되었습니다.
-      공식 정보는 <a href="https://anthropic.com" target="_blank" style="color:var(--accent2);">anthropic.com</a>을 참고하세요.
-    </p>
-  </footer>
-
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Claude Code 학습 자료실</title>
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+            }
+
+            :root {
+                --bg: #f7f3ee;
+                --paper: #fffdf9;
+                --ink: #24201c;
+                --muted: #6d655c;
+                --line: #ded5ca;
+                --accent: #bd5f3b;
+                --accent-dark: #8f4126;
+                --teal: #1f766d;
+                --rose: #a84c61;
+                --gold: #9a7427;
+                --shadow: 0 18px 45px rgba(74, 54, 37, 0.12);
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                margin: 0;
+                font-family:
+                    "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic",
+                    sans-serif;
+                background: var(--bg);
+                color: var(--ink);
+                line-height: 1.65;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .topbar {
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                border-bottom: 1px solid rgba(222, 213, 202, 0.9);
+                background: rgba(247, 243, 238, 0.92);
+                backdrop-filter: blur(14px);
+            }
+
+            .nav {
+                max-width: 1180px;
+                min-height: 64px;
+                margin: 0 auto;
+                padding: 12px 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 18px;
+            }
+
+            .brand {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 17px;
+                font-weight: 900;
+            }
+
+            .brand-mark {
+                width: 30px;
+                height: 30px;
+                border-radius: 8px;
+                display: grid;
+                place-items: center;
+                color: #ffffff;
+                background: var(--accent);
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            .nav-links {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                color: var(--muted);
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .nav-links a:hover {
+                color: var(--accent-dark);
+            }
+
+            .hero,
+            .section,
+            .stats,
+            footer {
+                max-width: 1180px;
+                margin: 0 auto;
+                padding-left: 24px;
+                padding-right: 24px;
+            }
+
+            .hero {
+                padding-top: 68px;
+                padding-bottom: 42px;
+                display: grid;
+                grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+                gap: 42px;
+                align-items: center;
+            }
+
+            .eyebrow {
+                margin: 0 0 14px;
+                color: var(--accent-dark);
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            h1 {
+                margin: 0;
+                max-width: 760px;
+                font-size: clamp(40px, 6vw, 74px);
+                line-height: 1.05;
+                letter-spacing: 0;
+            }
+
+            .hero-copy {
+                max-width: 680px;
+                margin: 24px 0 0;
+                color: var(--muted);
+                font-size: 18px;
+            }
+
+            .actions {
+                margin-top: 30px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .button {
+                min-height: 46px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #ffffff;
+                padding: 11px 18px;
+                font-weight: 900;
+            }
+
+            .button.primary {
+                border-color: var(--accent);
+                background: var(--accent);
+                color: #ffffff;
+            }
+
+            .button:hover,
+            .card:hover,
+            .path-card:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+
+            .hero-visual {
+                overflow: hidden;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #ffffff;
+                box-shadow: var(--shadow);
+            }
+
+            .hero-visual img {
+                display: block;
+                width: 100%;
+                aspect-ratio: 4 / 3;
+                object-fit: cover;
+            }
+
+            .hero-visual span {
+                display: block;
+                border-top: 1px solid var(--line);
+                padding: 14px 16px;
+                color: var(--muted);
+                font-size: 13px;
+            }
+
+            .stats {
+                padding-top: 0;
+                padding-bottom: 38px;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .stat {
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: var(--paper);
+                padding: 18px;
+            }
+
+            .stat strong {
+                display: block;
+                color: var(--accent-dark);
+                font-size: 30px;
+                line-height: 1.1;
+            }
+
+            .stat span {
+                color: var(--muted);
+                font-size: 14px;
+                font-weight: 800;
+            }
+
+            .section {
+                padding-top: 54px;
+                padding-bottom: 54px;
+            }
+
+            .section-head {
+                margin-bottom: 22px;
+                display: flex;
+                align-items: end;
+                justify-content: space-between;
+                gap: 24px;
+            }
+
+            .label {
+                margin: 0 0 6px;
+                color: var(--teal);
+                font-size: 13px;
+                font-weight: 900;
+            }
+
+            h2 {
+                margin: 0;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.15;
+                letter-spacing: 0;
+            }
+
+            .desc {
+                max-width: 520px;
+                margin: 0;
+                color: var(--muted);
+                font-size: 15px;
+            }
+
+            .path-grid {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .doc-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .path-card,
+            .card {
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #ffffff;
+                padding: 18px;
+                transition:
+                    border-color 0.18s,
+                    transform 0.18s,
+                    box-shadow 0.18s;
+            }
+
+            .path-card:hover,
+            .card:hover {
+                border-color: var(--accent);
+            }
+
+            .step {
+                width: 34px;
+                height: 34px;
+                margin-bottom: 16px;
+                border-radius: 8px;
+                display: grid;
+                place-items: center;
+                color: #ffffff;
+                background: var(--teal);
+                font-weight: 900;
+            }
+
+            .tag {
+                width: fit-content;
+                min-height: 26px;
+                display: inline-flex;
+                align-items: center;
+                margin-bottom: 12px;
+                border-radius: 8px;
+                background: #e4f1ee;
+                color: var(--teal);
+                padding: 3px 9px;
+                font-size: 12px;
+                font-weight: 900;
+            }
+
+            .tag.gold {
+                background: #f5ead0;
+                color: var(--gold);
+            }
+
+            .tag.rose {
+                background: #f5e3e7;
+                color: var(--rose);
+            }
+
+            .tag.orange {
+                background: #f8e5dc;
+                color: var(--accent-dark);
+            }
+
+            .path-card h3,
+            .card h3 {
+                margin: 0 0 8px;
+                font-size: 17px;
+                line-height: 1.35;
+                letter-spacing: 0;
+            }
+
+            .path-card p,
+            .card p {
+                margin: 0;
+                color: var(--muted);
+                font-size: 14px;
+            }
+
+            .linkline {
+                margin-top: auto;
+                padding-top: 18px;
+                color: var(--accent-dark);
+                font-size: 14px;
+                font-weight: 900;
+            }
+
+            .resource-block {
+                margin-top: 34px;
+            }
+
+            .resource-title {
+                margin: 0 0 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 20px;
+                letter-spacing: 0;
+            }
+
+            .resource-title::before {
+                content: "";
+                width: 10px;
+                height: 28px;
+                border-radius: 8px;
+                background: var(--accent);
+            }
+
+            .utility {
+                border-top: 1px solid var(--line);
+                border-bottom: 1px solid var(--line);
+                background: rgba(255, 253, 249, 0.62);
+            }
+
+            .compact-list {
+                margin-top: 20px;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .compact-list a {
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #ffffff;
+                padding: 12px 14px;
+                color: var(--accent-dark);
+                font-weight: 900;
+            }
+
+            footer {
+                padding-top: 34px;
+                padding-bottom: 46px;
+                color: var(--muted);
+                font-size: 14px;
+            }
+
+            footer a {
+                color: var(--accent-dark);
+                font-weight: 900;
+            }
+
+            @media (max-width: 920px) {
+                .hero,
+                .stats,
+                .path-grid,
+                .doc-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .section-head {
+                    align-items: start;
+                    flex-direction: column;
+                }
+            }
+
+            @media (max-width: 680px) {
+                .nav {
+                    align-items: start;
+                    flex-direction: column;
+                }
+
+                .hero,
+                .section,
+                .stats,
+                footer {
+                    padding-left: 18px;
+                    padding-right: 18px;
+                }
+
+                .hero {
+                    padding-top: 42px;
+                }
+
+                .compact-list {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header class="topbar">
+            <nav class="nav" aria-label="주요 메뉴">
+                <a class="brand" href="#">
+                    <span class="brand-mark">CC</span>
+                    <span>Claude Code 학습 자료실</span>
+                </a>
+                <div class="nav-links">
+                    <a href="#path">추천 순서</a>
+                    <a href="#library">자료 전체</a>
+                    <a href="#tools">환경 설정</a>
+                    <a
+                        href="https://docs.anthropic.com/en/docs/claude-code"
+                        target="_blank"
+                        rel="noopener"
+                        >공식 문서</a
+                    >
+                </div>
+            </nav>
+        </header>
+
+        <main>
+            <section class="hero">
+                <div>
+                    <p class="eyebrow">
+                        Claude Code를 처음 배우는 사람을 위한 정리본이다
+                    </p>
+                    <h1>설치부터 팀 운용까지 한 곳에서 찾는다</h1>
+                    <p class="hero-copy">
+                        이 저장소의 모든 글을 주제별로 묶었다. 문서를 누르면
+                        Markdown 원문이 아니라 웹에서 읽기 좋은 문서 화면으로
+                        열린다.
+                    </p>
+                    <div class="actions">
+                        <a class="button primary" href="#path"
+                            >추천 순서로 보기</a
+                        >
+                        <a class="button" href="#library">전체 자료 보기</a>
+                        <a
+                            class="button"
+                            href="viewer.html?file=00-claude-cheat-sheet.md"
+                            >치트시트 열기</a
+                        >
+                    </div>
+                </div>
+                <a
+                    class="hero-visual"
+                    href="image-viewer.html"
+                >
+                    <img
+                        src="infographics/001.jpg"
+                        alt="Claude Code API 할당량 소진 시 로컬 모델로 계속 작업하는 방법 인포그래픽"
+                    />
+                    <span
+                        >인포그래픽: Claude Code API 한도와 로컬 모델 활용
+                        흐름을 빠르게 확인한다.</span
+                    >
+                </a>
+            </section>
+
+            <section class="stats" aria-label="자료 요약">
+                <div class="stat">
+                    <strong>36</strong><span>연결된 학습 문서</span>
+                </div>
+                <div class="stat">
+                    <strong>6</strong><span>학습과 실무 주제 묶음</span>
+                </div>
+                <div class="stat">
+                    <strong>1</strong><span>Markdown 웹 뷰어</span>
+                </div>
+            </section>
+
+            <section class="section" id="path">
+                <div class="section-head">
+                    <div>
+                        <p class="label">Learning Path</p>
+                        <h2>처음이라면 이 순서로 본다</h2>
+                    </div>
+                    <p class="desc">
+                        기초 개념, 공식 권장 방식, 실전 설정, 치트시트 순서로
+                        보면 Claude Code 운용 감각을 빠르게 잡을 수 있다.
+                    </p>
+                </div>
+                <div class="path-grid">
+                    <a
+                        class="path-card"
+                        href="viewer.html?file=hands-on-claudecode.md"
+                        ><span class="step">1</span>
+                        <h3>사내 스터디 자료로 전체 그림 잡기</h3>
+                        <p>
+                            CLAUDE.md, 컨텍스트, Plan 모드, 확장 기능, 병렬
+                            처리까지 입문 흐름을 훑는다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a
+                        class="path-card"
+                        href="viewer.html?file=claude-code-best-practices-official.md"
+                        ><span class="step">2</span>
+                        <h3>공식 베스트 프랙티스로 기준 세우기</h3>
+                        <p>
+                            컨텍스트 관리, 검증 가능성, 단계적 접근법 같은 실무
+                            원칙을 확인한다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a
+                        class="path-card"
+                        href="viewer.html?file=claude-code-complete-setup-guide-2026.md"
+                        ><span class="step">3</span>
+                        <h3>Hooks, Skills, MCP까지 설정하기</h3>
+                        <p>
+                            개인과 팀 환경에서 반복적으로 쓸 설정 파일과 자동화
+                            구성을 정리한다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a
+                        class="path-card"
+                        href="viewer.html?file=00-claude-cheat-sheet.md"
+                        ><span class="step">4</span>
+                        <h3>치트시트로 명령어를 옆에 둔다</h3>
+                        <p>
+                            설치, 인증, CLI 플래그, 슬래시 명령어, 단축키,
+                            권한을 빠르게 찾아본다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                </div>
+            </section>
+
+            <section class="section" id="library">
+                <div class="section-head">
+                    <div>
+                        <p class="label">Library</p>
+                        <h2>주제별 자료 전체</h2>
+                    </div>
+                </div>
+
+                <div class="resource-block">
+                    <h3 class="resource-title">입문과 핵심 개념</h3>
+                    <div class="doc-grid">
+                        <a
+                            class="card"
+                            href="viewer.html?file=hands-on-claudecode.md"
+                            ><span class="tag">입문</span>
+                            <h3>사내 Claude Code 스터디</h3>
+                            <p>
+                                기초부터 팀 플랜, 병렬 처리, 피드백 루프까지
+                                강의형으로 정리한 문서다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=00-claude-cheat-sheet.md"
+                            ><span class="tag">입문</span>
+                            <h3>Claude Code 치트시트</h3>
+                            <p>
+                                명령어, 설정 파일, Hooks, MCP, 권한을 빠르게
+                                참조한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-best-practices-official.md"
+                            ><span class="tag">기준</span>
+                            <h3>공식 베스트 프랙티스 핵심 정리</h3>
+                            <p>
+                                공식 권장 방식의 핵심 원칙을 실무 기준으로
+                                정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-boris-tips-13.md"
+                            ><span class="tag">팁</span>
+                            <h3>개발자 Boris의 활용 팁 13가지</h3>
+                            <p>
+                                Plan 모드, 서브에이전트, 검증 방법 등 실제
+                                사용자 관점의 팁을 본다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-tips-11.md"
+                            ><span class="tag">팁</span>
+                            <h3>Claude Code 실용 소기술 11선</h3>
+                            <p>
+                                작업 중 바로 쓰는 단축 흐름과 프롬프트 운용
+                                요령을 모았다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-hidden-commands-20-tips.md"
+                            ><span class="tag">팁</span>
+                            <h3>숨겨진 커맨드와 기술 20선</h3>
+                            <p>
+                                초급부터 전문가용 기능까지 난이도별로 찾아볼 수
+                                있다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-7-features-guide.md"
+                            ><span class="tag">개념</span>
+                            <h3>Claude Code 7가지 확장 기능</h3>
+                            <p>
+                                CLAUDE.md, rules, commands, hooks, MCP 등 확장
+                                수단을 비교한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-copy-export-guide.md"
+                            ><span class="tag">활용</span>
+                            <h3>출력을 복사하고 저장하는 방법</h3>
+                            <p>
+                                `/copy`, `/export`를 중심으로 결과물을 보존하는
+                                방법을 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=everything-claude-code-guide.md"
+                            ><span class="tag">참고</span>
+                            <h3>everything-claude-code 완전 정리</h3>
+                            <p>
+                                에이전트, 스킬, 커맨드, 룰, 훅, MCP 구성을
+                                빠르게 훑는다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                    </div>
+                </div>
+
+                <div class="resource-block">
+                    <h3 class="resource-title">CLAUDE.md와 작업 규칙</h3>
+                    <div class="doc-grid">
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-md-guide.md"
+                            ><span class="tag gold">CLAUDE.md</span>
+                            <h3>CLAUDE.md를 잘 쓰는 방법</h3>
+                            <p>
+                                메모리 계층, 작성 기준, 안티패턴, 지속 개선
+                                방식을 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-md-design-principles.md"
+                            ><span class="tag gold">설계</span>
+                            <h3>CLAUDE.md 설계 원칙</h3>
+                            <p>
+                                기술 스택, 코딩 규약, 행동 원칙을 프로젝트
+                                문맥에 맞게 설계한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-md-workflow-orchestration.md"
+                            ><span class="tag gold">워크플로우</span>
+                            <h3>워크플로우 오케스트레이션</h3>
+                            <p>
+                                Plan 모드, 서브에이전트, 자기 개선 루프, 완료 전
+                                검증을 규칙화한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-agent-workflow-principles-boris-cherny-claude.md"
+                            ><span class="tag gold">워크플로우</span>
+                            <h3>Boris Cherny식 에이전트 워크플로우 원칙</h3>
+                            <p>
+                                작업 관리와 자율 버그 수정까지 포함한 에이전트
+                                운용 원칙이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=rules_output-compression.md"
+                            ><span class="tag gold">규칙</span>
+                            <h3>출력 토큰 압축</h3>
+                            <p>
+                                불필요한 출력 토큰을 줄이는 규칙과 적용 제외
+                                범위를 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                    </div>
+                </div>
+
+                <div class="resource-block">
+                    <h3 class="resource-title">확장, 자동화, 생태계</h3>
+                    <div class="doc-grid">
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-complete-setup-guide-2026.md"
+                            ><span class="tag orange">설정</span>
+                            <h3>완전 설정 가이드 2026</h3>
+                            <p>
+                                Hooks, Skills, MCP, 권한 관리를 한 번에 구성하는
+                                운영 가이드다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-hooks-guide.md"
+                            ><span class="tag orange">Hooks</span>
+                            <h3>Claude Code Hooks 완전 정리</h3>
+                            <p>
+                                Hook 이벤트, 설정 파일, 입출력 사양, 실전 자동화
+                                예제를 다룬다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-ecosystem-mcp-plugins-tools.md"
+                            ><span class="tag orange">MCP</span>
+                            <h3>MCP, 플러그인, 주변 도구</h3>
+                            <p>
+                                MCP 서버, 공식 플러그인, 워크플로우 도구를
+                                용도별로 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-plugins-official-2026-03.md"
+                            ><span class="tag orange">플러그인</span>
+                            <h3>공식 Claude Code Plugin 살펴보기</h3>
+                            <p>
+                                2026년 3월 기준 공식 플러그인 흐름과 활용
+                                포인트를 본다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-skills-research-design-guide.md"
+                            ><span class="tag orange">Skills</span>
+                            <h3>비코딩 리서치 스킬 설계 가이드</h3>
+                            <p>
+                                코딩 외 리서치 업무에 맞춘 Skill 설계 방법을
+                                정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-skills-vs-subagents.md"
+                            ><span class="tag orange">비교</span>
+                            <h3>Skills vs SubAgents 핵심 정리</h3>
+                            <p>
+                                스킬과 서브에이전트를 언제 나눠 써야 하는지
+                                비교한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-skill-recommended.md"
+                            ><span class="tag orange">추천</span>
+                            <h3>Claude Code Skill 추천</h3>
+                            <p>
+                                Context7, Ralph Loop, 프론트엔드 디자인, 리뷰
+                                에이전트 등을 소개한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-review-subagent.md"
+                            ><span class="tag orange">리뷰</span>
+                            <h3>코드 리뷰 SubAgent 핵심 정리</h3>
+                            <p>
+                                리뷰 전담 서브에이전트 구성과 품질 관리 흐름을
+                                정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=csharp-roslyn-language-server.md"
+                            ><span class="tag orange">LSP</span>
+                            <h3>C# 랭귀지 서버 사용하기</h3>
+                            <p>
+                                Claude Code에서 roslyn-language-server를
+                                연동하는 설정 방법이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                    </div>
+                </div>
+
+                <div class="resource-block">
+                    <h3 class="resource-title">실무 플로우와 팀 운용</h3>
+                    <div class="doc-grid">
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-spec-driven-feature-plan.md"
+                            ><span class="tag rose">SDD</span>
+                            <h3>Spec 주도 개발과 `/feature-plan`</h3>
+                            <p>
+                                사양 기반 기능 계획을 만들고 단계별 구현으로
+                                연결하는 방법이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-codex-cross-check-flow.md"
+                            ><span class="tag rose">검증</span>
+                            <h3>Claude Code × Codex 크로스체크 플로</h3>
+                            <p>
+                                두 도구를 함께 써서 설계와 구현을 교차 검증하는
+                                흐름이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a class="card" href="viewer.html?file=git_worktree.md"
+                            ><span class="tag rose">병렬</span>
+                            <h3>Claude Code와 Git Worktree</h3>
+                            <p>
+                                여러 작업을 분리해 병렬 에이전트로 진행하는
+                                워크트리 활용법이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-agent-teams-guide.md"
+                            ><span class="tag rose">팀</span>
+                            <h3>Claude Code Agent Teams 완전 정리</h3>
+                            <p>
+                                Agent Teams의 개념, 셋업, 실험 결과와 운용
+                                주의점을 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=claude-code-agent-teams-whiteboard-pattern.md"
+                            ><span class="tag rose">협업</span>
+                            <h3>Agent Teams 화이트보드 패턴</h3>
+                            <p>
+                                분업을 협업으로 바꾸기 위한 공유 화이트보드 운영
+                                패턴이다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                        <a
+                            class="card"
+                            href="viewer.html?file=agent-teams-one-week.md"
+                            ><span class="tag rose">회고</span>
+                            <h3>에이전트 팀을 1주일 투입한 회고</h3>
+                            <p>
+                                실무 투입 후 작업 정의와 인간의 역할이 어떻게
+                                바뀌는지 정리한다.
+                            </p>
+                            <span class="linkline">문서 보기</span></a
+                        >
+                    </div>
+                </div>
+            </section>
+
+            <section class="section utility" id="tools">
+                <div class="section-head">
+                    <div>
+                        <p class="label">Environment & Safety</p>
+                        <h2>환경 설정과 보안 자료</h2>
+                    </div>
+                    <p class="desc">
+                        OpenRouter, Poe, 샌드박스, 보안 플러그인처럼 실제 사용
+                        전에 확인해야 할 자료를 따로 묶었다.
+                    </p>
+                </div>
+                <div class="doc-grid">
+                    <a class="card" href="viewer.html?file=use-openrouter.md"
+                        ><span class="tag">OpenRouter</span>
+                        <h3>Claude Code에서 OpenRouter 사용하기</h3>
+                        <p>
+                            Windows 환경 변수와 모델 선택까지 포함한 OpenRouter
+                            설정 방법이다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a class="card" href="viewer.html?file=poe_api_key.md"
+                        ><span class="tag">Poe</span>
+                        <h3>Poe API Key로 Claude Code 사용하기</h3>
+                        <p>
+                            Poe API 키 저장과 Claude Code 실행 환경 구성을
+                            정리한다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a class="card" href="viewer.html?file=claude_sandbox.md"
+                        ><span class="tag">보안</span>
+                        <h3>안전하게 쓰기 위한 10가지 설정</h3>
+                        <p>
+                            명령 차단, 권한 관리, 컨테이너 활용 등 안전장치를
+                            점검한다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a
+                        class="card"
+                        href="viewer.html?file=claude-code-sandbox-202604.md"
+                        ><span class="tag">샌드박스</span>
+                        <h3>Claude Code Sandbox 기능 소개</h3>
+                        <p>
+                            2026년 4월 기준 샌드박스 기능과 사용 흐름을
+                            정리한다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                    <a
+                        class="card"
+                        href="viewer.html?file=claude-code-sensitive-canary-security-plugin.md"
+                        ><span class="tag">보안</span>
+                        <h3>sensitive-canary 보안 플러그인</h3>
+                        <p>
+                            기밀 정보 유출을 막기 위한 플러그인 개념과 활용
+                            방법이다.
+                        </p>
+                        <span class="linkline">문서 보기</span></a
+                    >
+                </div>
+
+                <div class="compact-list" aria-label="기타 링크">
+                    <a href="viewer.html?file=link.md">링크 모음</a>
+                    <a href="viewer.html?file=README.md">README</a>
+                    <a
+                        href="https://news.hada.io/topic?id=26649"
+                        target="_blank"
+                        rel="noopener"
+                        >Claude Code 커스터마이징 팁 외부 글</a
+                    >
+                    <a
+                        href="https://docs.anthropic.com/en/docs/claude-code"
+                        target="_blank"
+                        rel="noopener"
+                        >Anthropic Claude Code 공식 문서</a
+                    >
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>
+                이 페이지는 저장소의 Claude Code 학습 문서를 한 곳에서 찾기 쉽게
+                연결하는 GitHub Pages용 인덱스다.
+            </p>
+            <p>
+                문서는
+                <a href="viewer.html?file=00-claude-cheat-sheet.md"
+                    >Markdown 웹 뷰어</a
+                >에서 렌더링되어 표시된다.
+            </p>
+        </footer>
+    </body>
 </html>
