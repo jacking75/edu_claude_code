@@ -286,6 +286,7 @@
     </article>
   </main>
 
+  <script src="docs-data.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@13.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
@@ -339,6 +340,141 @@
       content.innerHTML = `<div class="state">${message}</div>`;
     }
 
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function basicMarkdownRender(markdown) {
+      const lines = markdown.split(/\r?\n/);
+      const html = [];
+      let inCode = false;
+      let codeLang = "";
+      let paragraph = [];
+      let listOpen = false;
+
+      function flushParagraph() {
+        if (!paragraph.length) {
+          return;
+        }
+        html.push(`<p>${paragraph.join(" ")}</p>`);
+        paragraph = [];
+      }
+
+      function closeList() {
+        if (!listOpen) {
+          return;
+        }
+        html.push("</ul>");
+        listOpen = false;
+      }
+
+      for (const line of lines) {
+        const fence = line.match(/^```(\S*)/);
+        if (fence) {
+          flushParagraph();
+          closeList();
+          if (!inCode) {
+            inCode = true;
+            codeLang = fence[1] || "";
+            html.push(`<pre><code class="language-${escapeHtml(codeLang)}">`);
+          } else {
+            inCode = false;
+            html.push("</code></pre>");
+          }
+          continue;
+        }
+
+        if (inCode) {
+          html.push(`${escapeHtml(line)}\n`);
+          continue;
+        }
+
+        if (!line.trim()) {
+          flushParagraph();
+          closeList();
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,4})\s+(.+)$/);
+        if (heading) {
+          flushParagraph();
+          closeList();
+          html.push(`<h${heading[1].length}>${escapeHtml(heading[2])}</h${heading[1].length}>`);
+          continue;
+        }
+
+        const item = line.match(/^\s*[-*]\s+(.+)$/);
+        if (item) {
+          flushParagraph();
+          if (!listOpen) {
+            html.push("<ul>");
+            listOpen = true;
+          }
+          html.push(`<li>${escapeHtml(item[1])}</li>`);
+          continue;
+        }
+
+        paragraph.push(escapeHtml(line));
+      }
+
+      flushParagraph();
+      closeList();
+      if (inCode) {
+        html.push("</code></pre>");
+      }
+      return html.join("\n");
+    }
+
+    async function getMarkdown(targetFile) {
+      const embedded = window.CLAUDE_DOCS && Object.prototype.hasOwnProperty.call(window.CLAUDE_DOCS, targetFile);
+
+      if (window.location.protocol === "file:" && embedded) {
+        return {
+          markdown: window.CLAUDE_DOCS[targetFile],
+          source: "내장 문서 데이터"
+        };
+      }
+
+      try {
+        const response = await fetch(targetFile);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return {
+          markdown: await response.text(),
+          source: "Markdown 파일"
+        };
+      } catch (error) {
+        if (embedded) {
+          return {
+            markdown: window.CLAUDE_DOCS[targetFile],
+            source: "내장 문서 데이터"
+          };
+        }
+        throw error;
+      }
+    }
+
+    function renderMarkdown(markdown) {
+      if (window.marked && window.DOMPurify) {
+        const html = marked.parse(markdown, {
+          gfm: true,
+          breaks: false
+        });
+        return DOMPurify.sanitize(html, {
+          ADD_ATTR: ["target", "rel"]
+        });
+      }
+
+      return basicMarkdownRender(markdown);
+    }
+
     function rewriteMarkdownLinks(root) {
       root.querySelectorAll("a[href$='.md']").forEach((link) => {
         const href = link.getAttribute("href");
@@ -367,27 +503,9 @@
       docMeta.textContent = file;
 
       try {
-        const response = await fetch(file);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const markdown = await response.text();
-        marked.setOptions({
-          gfm: true,
-          breaks: false,
-          highlight(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-              return hljs.highlight(code, { language: lang }).value;
-            }
-            return hljs.highlightAuto(code).value;
-          }
-        });
-
-        const html = marked.parse(markdown);
-        content.innerHTML = DOMPurify.sanitize(html, {
-          ADD_ATTR: ["target", "rel"]
-        });
+        const result = await getMarkdown(file);
+        content.innerHTML = renderMarkdown(result.markdown);
+        docMeta.textContent = `${file} · ${result.source}`;
         rewriteMarkdownLinks(content);
 
         const firstHeading = content.querySelector("h1, h2");
@@ -395,13 +513,15 @@
           document.title = `${firstHeading.textContent.trim()} - Claude Code 학습 자료실`;
         }
 
-        content.querySelectorAll("pre code").forEach((block) => {
-          hljs.highlightElement(block);
-        });
+        if (window.hljs) {
+          content.querySelectorAll("pre code").forEach((block) => {
+            hljs.highlightElement(block);
+          });
+        }
       } catch (error) {
         document.title = "문서 로딩 실패 - Claude Code 학습 자료실";
         docMeta.textContent = file;
-        renderState("문서를 불러오지 못했다. GitHub Pages 또는 로컬 웹 서버에서 열었는지 확인한다.");
+        renderState("문서를 불러오지 못했다. docs-data.js가 함께 배포되어 있는지 확인한다.");
       }
     }
 
